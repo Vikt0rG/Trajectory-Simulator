@@ -1,5 +1,3 @@
-# Nuclear Fission Simulation
+# Particle Trajectory Simulator
 
-A simulation of nuclear fission events, designed to track and visualize the fission of atomic 
-nuclei and the resulting chain reaction. The project combines C++ for high-speed computation of 
-fission events and Python for real-time animation of neutron paths and nuclear fragments.
+A simulation of particle movement within an enclosure, designed to track and visualize intermidiate interactions. The project combines C++ for high-speed computation for each event and Python for real-time animation of particles' paths.
