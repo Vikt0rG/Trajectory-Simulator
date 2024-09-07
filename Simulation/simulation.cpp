@@ -1,6 +1,4 @@
 #include "simulation.hpp"
-#include <iostream>
-#include <cmath>
 
 using namespace std;
 
@@ -34,6 +32,9 @@ void Nuclei::displayPosition() const {
 double Nuclei::getMass() const {
     return mass;
 }
+vector<double> Nuclei::getPosition() const {
+    return vector<double>{x, y};
+}
 
 // Setter functions for Nuclei
 void Nuclei::setMass(double mass) {
@@ -59,6 +60,7 @@ void Nuclei::handleCollision(const Enclosure& enclosure) {
 
     // Check if the nucleus is outside the enclosure
     if (distanceSquared > radiusSquared) {
+        cout << distanceSquared << endl;
         // Compute normal at the point of collision
         double distance = sqrt(distanceSquared);
         double normalX = dx / distance;
@@ -75,4 +77,24 @@ void Nuclei::handleCollision(const Enclosure& enclosure) {
         x -= overlap * normalX;
         y -= overlap * normalY;
     }
+}
+
+void saveData(const Nuclei& nuclei, const string& filename) {
+    ofstream file(filename);
+    if (file.is_open()) {
+        double positionX = nuclei.getPosition().at(0);
+        double positionY = nuclei.getPosition().at(1);
+        file << positionX << "," << positionY << "\n";
+        file.close();
+    } else {
+        cerr << "Unable to open file for writing!" << endl;
+    }
+}
+
+void sendData(int sockfd, const Nuclei& nuclei) {
+    double positionX = nuclei.getPosition().at(0);
+    double positionY = nuclei.getPosition().at(1);
+    cout << positionX << " " << positionY << endl;
+    string data = to_string(positionX) + "," + to_string(positionY) + "\n";
+    send(sockfd, data.c_str(), data.length(), 0);
 }

@@ -1,20 +1,29 @@
 #ifndef SIMULATION_HPP
 #define SIMULATION_HPP
 
-#include <string>
+#include <iostream>
+#include <fstream>
+#include <cmath>
 #include <vector>
+#include <string>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <unistd.h>
+#include <cstring>
+#include <chrono>
+#include <thread>
 
 using namespace std;
 
 class Enclosure {
     public:
-        Enclosure(std::string material, double radius, double thickness, double centerX, double centerY);
+        Enclosure(string material, double radius, double thickness, double centerX, double centerY);
 
         double getRadius() const;
-        std::vector<double> getCenter() const;
+        vector<double> getCenter() const;
 
     private:
-        std::string material;          // Enclosure Material
+        string material;          // Enclosure Material
         double radius;                // Enclosure Radius
         double thickness;             // Enclosure wall thickness
         double centerX, centerY;      // Coordinates of the center
@@ -26,6 +35,7 @@ class Nuclei {
 
         void displayInfo() const;
         double getMass() const;
+        vector<double> getPosition() const;
         void setMass(double mass);
         void updatePosition(double timeStep);
         void displayPosition() const;
@@ -37,5 +47,8 @@ class Nuclei {
         double x, y;     // Position of the nucleus
         double vx, vy;   // Velocity of the nucleus
 };
+
+void saveData(const Nuclei& nuclei, const string& filename);
+void sendData(int sockfd, const Nuclei& nuclei);
 
 #endif // SIMULATION_HPP
