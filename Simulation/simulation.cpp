@@ -15,50 +15,100 @@ vector<double> Enclosure::getCenter() const {
     return vector<double> {centerX, centerY};  // Return center coordinates as a vector
 }
 
-// Implementation of the Nuclei constructor
-Nuclei::Nuclei(int id, double mass, double x, double y, double vx, double vy)
-    : id(id), mass(mass), x(x), y(y), vx(vx), vy(vy) {}
+// Implementation of the Particle constructor
+Particle::Particle(int id, double mass, double charge, double x, double y, double vx, double vy, double ax, double ay)
+    : id(id), mass(mass), charge(charge), x(x), y(y), vx(vx), vy(vy), ax(ax), ay(ay) {}
 
 // Displaying functions
-void Nuclei::displayInfo() const {
-    cout << "Nucleus ID: " << id << ", Mass: " << mass << endl;
+void Particle::displayInfo() const {
+    cout << "Particle ID: " << id << ", Mass: " << mass << endl;
+}
+void Particle::displayPosition() const {
+    cout << "Particle position: (" << x << ", " << y << ")" << endl;
 }
 
-void Nuclei::displayPosition() const {
-    cout << "Nucleus position: (" << x << ", " << y << ")" << endl;
+// Getter functions for Particle
+double Particle::getMass() const { return mass; }
+vector<double> Particle::getPosition() const { return vector<double>{x, y}; }
+vector<double> Particle::getVelocity() const { return vector<double>{vx, vy}; }
+vector<double> Particle::getAcceleration() const { return vector<double>{ax, ay}; }
+double Particle::getCummulativeForceX() const { return cummulative_force_x; }
+double Particle::getCummulativeForceY() const { return cummulative_force_y; }
+
+// Setter functions for Particle
+void Particle::setMass(double value) { mass = value; }
+void Particle::setCummulativeForceX(double ForceX) { cummulative_force_x = ForceX; }
+void Particle::setCummulativeForceY(double ForceY) { cummulative_force_y = ForceY; }
+
+// Update particle kinematics
+void Particle::updatePosition(double dt) {
+    x += vx * dt + 1/2 * ax * pow(dt, 2);
+    y += vy * dt + 1/2 * ay * pow(dt, 2);
+}
+void Particle::updateVelocity(double dt) {
+    vx += ax * dt;
+    vy += ay * dt;
+}
+void Particle::updateAcceleration() {
+    ax += cummulative_force_x / mass;
+    ay += cummulative_force_y / mass;
 }
 
-// Getter functions for Nuclei
-double Nuclei::getMass() const {
-    return mass;
-}
-vector<double> Nuclei::getPosition() const {
-    return vector<double>{x, y};
-}
+void Particle::applyMagnetForce(const vector<pair<double, double>>& magnet_positions, double B0) {
 
-// Setter functions for Nuclei
-void Nuclei::setMass(double mass) {
-    this->mass = mass;
-}
+    // Initialize variables
+    vector<pair<double, double>> fields(magnet_positions.size());
+    vector<pair<double, double>> forces(fields.size());
+    double cummulative_field_x = 0;
+    double cummulative_field_y = 0;
 
-// Update nucleus position based on its velocity and time step
-void Nuclei::updatePosition(double timeStep) {
-    x += vx * timeStep;
-    y += vy * timeStep;
+    // Iterate over each magnet and calculate its field
+    for (size_t i{0}; i < fields.size(); ++i) {
+        double dx = x - magnet_positions.at(i).first;
+        double dy = y - magnet_positions.at(i).second;
+        double r_squared = dx*dx + dy*dy;
+        if (r_squared == 0) continue; // Avoid division by zero
+
+        // Biot-Savart
+        fields.at(i).first = B0 * dy / pow(r_squared, 1.5);
+        fields.at(i).second = -B0 * dx / pow(r_squared, 1.5);
+    }
+    cout << "=====================================" << endl;
+    cout << "Magnetic fields: " << endl;
+    for (const auto& field : fields) {
+        cout << "(" << field.first << ", " << field.second << ")" << endl;
+        cummulative_field_x += field.first;
+        cummulative_field_y += field.second;
+    }
+    cout << "Cummulative field: " << cummulative_field_x << ", " << cummulative_field_y << endl;
+
+    // Iterate over each field and calculate its force
+    for (size_t i{0}; i < forces.size(); ++i) {
+        forces.at(i).first = charge * (vy * fields.at(i).second);
+        forces.at(i).second = - charge * (vx * fields.at(i).first);
+    }
+    cout << "-------------------------------------" << endl;
+    cout << "Magnetic forces: " << endl;
+    for (const auto& force : forces) {
+        cout << "(" << force.first << ", " << force.second << ")" << endl;
+        cummulative_force_x += force.first;
+        cummulative_force_y += force.second;
+    }
+    cout << "Cummulative force: " << cummulative_force_x << ", " << cummulative_force_y << endl;
 }
 
 // Handle collision with the enclosure walls
-void Nuclei::handleCollision(const Enclosure& enclosure) {
+void Particle::handleCollision(const Enclosure& enclosure) {
     double radius = enclosure.getRadius();
     vector<double> center = enclosure.getCenter();
 
-    // Compute distance squared from the nucleus to the center of the enclosure
+    // Compute distance squared from the particle to the center of the enclosure
     double dx = x - center[0];
     double dy = y - center[1];
     double distanceSquared = dx * dx + dy * dy;
     double radiusSquared = radius * radius;
 
-    // Check if the nucleus is outside the enclosure
+    // Check if the particle is outside the enclosure
     if (distanceSquared > radiusSquared) {
         cout << distanceSquared << endl;
         // Compute normal at the point of collision
@@ -71,7 +121,7 @@ void Nuclei::handleCollision(const Enclosure& enclosure) {
         vx -= 2 * dotProduct * normalX;
         vy -= 2 * dotProduct * normalY;
 
-        // Move the nucleus back inside the enclosure
+        // Move the particle back inside the enclosure
         cout << "Collision" << endl; 
         double overlap = distance - radius;
         x -= overlap * normalX;
@@ -79,11 +129,13 @@ void Nuclei::handleCollision(const Enclosure& enclosure) {
     }
 }
 
-void saveData(const Nuclei& nuclei, const string& filename) {
+// TODO: #1 Confinement: Add repulsive potential well
+
+void saveData(const Particle& particle, const string& filename) {
     ofstream file(filename);
     if (file.is_open()) {
-        double positionX = nuclei.getPosition().at(0);
-        double positionY = nuclei.getPosition().at(1);
+        double positionX = particle.getPosition().at(0);
+        double positionY = particle.getPosition().at(1);
         file << positionX << "," << positionY << "\n";
         file.close();
     } else {
@@ -91,10 +143,9 @@ void saveData(const Nuclei& nuclei, const string& filename) {
     }
 }
 
-void sendData(int sockfd, const Nuclei& nuclei) {
-    double positionX = nuclei.getPosition().at(0);
-    double positionY = nuclei.getPosition().at(1);
-    cout << positionX << " " << positionY << endl;
+void sendData(int sockfd, const Particle& particle) {
+    double positionX = particle.getPosition().at(0);
+    double positionY = particle.getPosition().at(1);
     string data = to_string(positionX) + "," + to_string(positionY) + "\n";
     send(sockfd, data.c_str(), data.length(), 0);
 }
