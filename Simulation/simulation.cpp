@@ -19,14 +19,6 @@ vector<double> Enclosure::getCenter() const {
 Particle::Particle(int id, double mass, double charge, double x, double y, double vx, double vy, double ax, double ay)
     : id(id), mass(mass), charge(charge), x(x), y(y), vx(vx), vy(vy), ax(ax), ay(ay) {}
 
-// Displaying functions
-void Particle::displayInfo() const {
-    cout << "Particle ID: " << id << ", Mass: " << mass << endl;
-}
-void Particle::displayPosition() const {
-    cout << "Particle position: (" << x << ", " << y << ")" << endl;
-}
-
 // Getter functions for Particle
 double Particle::getMass() const { return mass; }
 vector<double> Particle::getPosition() const { return vector<double>{x, y}; }
@@ -42,16 +34,16 @@ void Particle::setCummulativeForceY(double ForceY) { cummulative_force_y = Force
 
 // Update particle kinematics
 void Particle::updatePosition(double dt) {
-    x += vx * dt + 1/2 * ax * pow(dt, 2);
-    y += vy * dt + 1/2 * ay * pow(dt, 2);
+    x += vx * dt + 0.5 * ax * pow(dt, 2);
+    y += vy * dt + 0.5 * ay * pow(dt, 2);
 }
 void Particle::updateVelocity(double dt) {
     vx += ax * dt;
     vy += ay * dt;
 }
 void Particle::updateAcceleration() {
-    ax += cummulative_force_x / mass;
-    ay += cummulative_force_y / mass;
+    ax = cummulative_force_x / mass;
+    ay = cummulative_force_y / mass;
 }
 
 void Particle::applyMagnetForce(const vector<pair<double, double>>& magnet_positions, double B0) {
@@ -67,9 +59,8 @@ void Particle::applyMagnetForce(const vector<pair<double, double>>& magnet_posit
         double dx = x - magnet_positions.at(i).first;
         double dy = y - magnet_positions.at(i).second;
         double r_squared = dx*dx + dy*dy;
-        if (r_squared == 0) continue; // Avoid division by zero
 
-        // Biot-Savart
+        if (r_squared == 0) continue; // Avoid division by zero
         fields.at(i).first = B0 * dy / pow(r_squared, 1.5);
         fields.at(i).second = -B0 * dx / pow(r_squared, 1.5);
     }
@@ -95,6 +86,23 @@ void Particle::applyMagnetForce(const vector<pair<double, double>>& magnet_posit
         cummulative_force_y += force.second;
     }
     cout << "Cummulative force: " << cummulative_force_x << ", " << cummulative_force_y << endl;
+}
+
+void Particle::applyRadialPotential(double R, double k, double alpha) {
+    double r = sqrt(x*x + y*y);
+
+    // Calculate the potential and force near the boundary
+    // double V = k * pow(1.0 / (R - r), alpha);
+    double F_r = -k * alpha * pow(1.0 / (R - r), alpha + 1);
+
+    // Convert radial force to Cartesian components
+    cummulative_force_x += F_r * (x / r);
+    cummulative_force_y += F_r * (y / r);
+    cout << "Cummulative force absolute value: " << r << ", " << F_r << endl;
+
+    cout << "-------------------------------------" << endl;
+    cout << "Cummulative force components: " << cummulative_force_x << ", " << cummulative_force_y << endl;
+    cout << "-------------------------------------" << endl;
 }
 
 // Handle collision with the enclosure walls

@@ -33,7 +33,6 @@ class Particle {
     public:
         Particle(int id, double mass, double charge, double x, double y, double vx, double vy, double ax, double ay);
 
-        void displayInfo() const;
         double getMass() const;
         vector<double> getPosition() const;
         vector<double> getVelocity() const;
@@ -50,7 +49,7 @@ class Particle {
         void updateAcceleration();
 
         void applyMagnetForce(const vector<pair<double, double>>& magnet_positions, double B0);
-        void displayPosition() const;
+        void applyRadialPotential(double R, double k, double alpha);
         void handleCollision(const Enclosure& enclosure);
 
     private:

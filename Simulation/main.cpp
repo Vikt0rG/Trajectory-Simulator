@@ -48,30 +48,32 @@ int main() {
 
     // ---------------------------------------------------------------------------------------------
     Particle electron(1, 9.109e-31, -1.602e-19, 5, 5, 1, 1, 0, 0);
+    Particle uniton(2, 1.0, 1.0, 5.0, 5.0, 0.5, 0.1, 0, 0);
     // Enclosure enclosure("Steel", 5.0, 1.0, 0.0, 0.0);
 
     // Magnetic field parameters
-    double B0 = 1.0;
-    vector<pair<double, double>> magnet_positions = {{10, 10}, {-10, 10}, {-10, -10}, {-10, -10}};
+    // double B0 = 1.0;
+    // vector<pair<double, double>> magnet_positions = {{10, 10}, {-10, 10}, {-10, -10}, {-10, -10}};
 
-    double dt = 1e-6;  // Time step for integration
+    double dt = 1e-2;  // Time step for integration
 
-    for (int i = 0; i < 10; ++i) {
-        electron.setCummulativeForceX(0.0);
-        electron.setCummulativeForceY(0.0);
+    for (int i = 0; i < 1e4; ++i) {
+        uniton.setCummulativeForceX(0.0);
+        uniton.setCummulativeForceY(0.0);
 
-        electron.applyMagnetForce(magnet_positions, B0);
-        electron.updateAcceleration();
+        // electron.applyMagnetForce(magnet_positions, B0);
+        uniton.applyRadialPotential(10, 1, 1);
+        uniton.updateAcceleration();
 
-        electron.updatePosition(dt);
-        electron.updateVelocity(dt);
+        uniton.updatePosition(dt);
+        uniton.updateVelocity(dt);
         // Output the particle's position for visualization
         cout << "-------------------------------------" << endl;
         cout << "Time step: " << i << endl;
-        cout << "Position: " << electron.getPosition().at(0) << " " << electron.getPosition().at(1) << endl;
-        cout << "Velocity: " << electron.getVelocity().at(0) << " " << electron.getVelocity().at(1) << endl;
-        cout << "Acceleration: " << electron.getAcceleration().at(0) << " " << electron.getAcceleration().at(1) << endl;
-        sendData(new_socket, electron);
+        cout << "Position: " << uniton.getPosition().at(0) << " " << uniton.getPosition().at(1) << endl;
+        cout << "Velocity: " << uniton.getVelocity().at(0) << " " << uniton.getVelocity().at(1) << endl;
+        cout << "Acceleration: " << uniton.getAcceleration().at(0) << " " << uniton.getAcceleration().at(1) << endl;
+        sendData(new_socket, uniton);
         this_thread::sleep_for(chrono::milliseconds(10)); // Simulate time step
     }
 
